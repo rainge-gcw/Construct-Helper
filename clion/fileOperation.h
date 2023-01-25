@@ -38,7 +38,7 @@ public:
                     if(ch=='\n')break;
                     value+=ch;
                 }
-                cout<<value<<endl;
+                //cout<<value<<endl;
                 g.push_back({key,value});
                 value.clear();
             }

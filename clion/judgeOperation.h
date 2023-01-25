@@ -85,8 +85,6 @@ struct config {
     string input_path;
     string output_path;
     string error_path;
-    char *args[ARGS_MAX_NUMBER];
-    char *env[ENV_MAX_NUMBER];
     string log_path;
     string seccomp_rule_name;
     uid_t uid;
@@ -121,7 +119,7 @@ struct info{
     result res;
     string information;
 };
-
+#define init_config
 class JudgeOperator{
 public:
     static void construct_input(){
@@ -131,14 +129,13 @@ public:
 
     }
     static info stand_judge(const string &code,const string &stand_input,const string& stand_output){
-
         //获取池
-        string url;
-        int id=judge_poolOperator.get_pool(url);//../judge_pool/id
+        string pool_url;
+        int id=judge_poolOperator.get_pool(pool_url);//../judge_pool/id
         struct result *r;
-        r=(struct result *)malloc(sizeof(struct result));
+        r=new result;
         struct config *c;
-        c=(struct config *)malloc(sizeof(struct config));
+        c=new config;
         c->max_cpu_time=5000;
         c->max_real_time=-1;
         c->max_memory=104857600;
@@ -148,21 +145,21 @@ public:
         c->memory_limit_check_only=0;
 
 
-        FileOperator::write_txt(url+"/code.cpp",code);
-        string order="gcc "+url+"/code.cpp -ldl -lseccomp -o "+url+"/code >"+url+"/log.txt -fmax-errors=100";
+        FileOperator::write_txt(pool_url+"/code.cpp",code);
+        string order="g++ "+pool_url+"/code.cpp -ldl -lseccomp -o "+pool_url+"/code >"+pool_url+"/log.txt -fmax-errors=100";
         if(system(order.c_str())==-1){//编译失败
             init_result(r);
             r->error=COMPLIE_ERROR;
             r->result=COMPLIE_ERROR;
             string ce_info;
-            FileOperator::read_txt(url+"/log.txt",ce_info);
+            FileOperator::read_txt(pool_url+"/log.txt",ce_info);
             return {*r,ce_info};
         }
-        c->exe_path=(url+"/code");
+        c->exe_path=(pool_url+"/code");
         c->input_path=stand_input;
-        c->output_path=(url+"/data.out");
-        c->error_path=(url+"/err.txt");
-        c->log_path=(url+"/log.txt");
+        c->output_path=(pool_url+"/data.out");
+        c->error_path=(pool_url+"/err.txt");
+        c->log_path=(pool_url+"/log.txt");
         c->seccomp_rule_name="c_cpp";
         c->uid=0;
         c->gid=0;
@@ -170,10 +167,7 @@ public:
         //释放池
 
         string res_info="AC";
-        if(FileOperator::read_txt_without_end_of_line(url+"/data.out")!=FileOperator::read_txt_without_end_of_line(stand_output)){//WA
-            res_info="WA\n";
-            FileOperator::read_txt_limit(url+"/data.out",res_info,300);
-        }else if(r->result==1||r->result==2){
+        if(r->result==1||r->result==2){
             res_info="TLE";
         }else if(r->result==3){
             res_info="MLE";
@@ -181,9 +175,15 @@ public:
             res_info="RE";
         }else if(r->result==5){
             res_info="System error";
+        }else if(FileOperator::read_txt_without_end_of_line(pool_url+"/data.out")!=FileOperator::read_txt_without_end_of_line(stand_output)){
+            res_info="WA\n";
+            FileOperator::read_txt_limit(pool_url+"/data.out",res_info,300);
         }
         judge_poolOperator.free_pool(id);
-        return {*r,res_info};
+        auto it=*r;
+        delete r;
+        delete c;
+        return {it,res_info};
     }
     static void test(int max_time,long max_memory,char * exe_path,char *input_path,char* output_path,
                      char* error_path,char* log_path
@@ -285,6 +285,11 @@ void JudgeOperator::run(struct config *_config, struct result *_result) {
     }
     else if (child_pid > 0) {
         // create new thread to monitor process running time
+        cout<<child_pid<<endl;
+        string order="strace -o log.txt -T -tt -e trace=all -p "+ to_string(child_pid);
+        system(order.c_str());
+
+
         pthread_t tid = 0;
         if (_config->max_real_time != UNLIMITED) {
             struct timeout_killer_args killer_args{};
@@ -425,6 +430,7 @@ void JudgeOperator::child_process(FILE *log_fp, struct config *_config) {
         struct rlimit max_stack{};
         max_stack.rlim_cur = max_stack.rlim_max = (rlim_t) (_config->max_stack);
         if (setrlimit(RLIMIT_STACK, &max_stack) != 0) {
+
             CHILD_ERROR_EXIT(SETRLIMIT_FAILED);
         }
     }
@@ -523,7 +529,7 @@ void JudgeOperator::child_process(FILE *log_fp, struct config *_config) {
             CHILD_ERROR_EXIT(LOAD_SECCOMP_FAILED);
         }
     }
-    execve(_config->exe_path.c_str(), _config->args, _config->env);
+    execve(_config->exe_path.c_str(), nullptr, nullptr);
     CHILD_ERROR_EXIT(EXECVE_FAILED);
 
 }
@@ -547,13 +553,14 @@ int JudgeOperator::c_cpp_seccomp_rules(struct config *_config, bool allow_write_
                                 SCMP_SYS(newfstatat),SCMP_SYS(lseek),
                                 SCMP_SYS(rseq),SCMP_SYS(getrandom),
                                 SCMP_SYS(prlimit64),SCMP_SYS(set_robust_list),
-                                SCMP_SYS(openat),SCMP_SYS(set_tid_address)
+                                SCMP_SYS(openat),SCMP_SYS(set_tid_address),
+                                SCMP_SYS(futex)
 
     }; // add extra rule for pread64
     //fprintf(stderr, "123");
     int syscalls_whitelist_length = sizeof(syscalls_whitelist) / sizeof(int);
     scmp_filter_ctx ctx = nullptr;
-    // load seccomp rules
+    // load seccomp rulesw
     ctx = seccomp_init(SCMP_ACT_KILL);
     //fprintf(stderr, "123");
 

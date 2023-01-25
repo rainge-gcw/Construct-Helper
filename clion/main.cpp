@@ -32,29 +32,34 @@ signed main(){
     /*JudgeOperator::test(1000,104857600,"/home/gcw/test/test_clion/1",
                         "/home/gcw/test/test_clion/1.in","/home/gcw/test/test_clion/1.out",
                         "/home/gcw/test/test_clion/err.txt","/home/gcw/test/test_clion/log.txt");*/
+    /*
     fprintf(stderr, "123");
-    string code="#include<stdio.h>\n"
-                "int main(){\n"
-                "  int a;\n"
-                "  scanf(\"%d\",&a);\n"
-                "  if(a==123)puts(\"yes\");\n"
-                "  else puts(\"no\");\n"
-                "  return 0;\n"
-                "}";
-    string input="/home/gcw/test/test_clion/1.in";
-    string output="/home/gcw/test/test_clion/1.out";
-    auto it=JudgeOperator::stand_judge(code,input,output);
-    cout<<it.information<<endl;
-    auto *r=&it.res;
-    cout<<r->cpu_time<<endl;
-    cout<<r->real_time<<endl;
-    cout<<r->memory<<endl;
-    cout<<r->signal<<endl;
-    cout<<r->exit_code<<endl;
-    cout<<r->result<<endl;
-    cout<<r->error<<endl;
+    for(int i=1;i<=10;i++){
+        string code="#include<stdio.h>\n"
+                    "int main(){\n"
+                    "  int a;\n"
+                    "  scanf(\"%d\",&a);\n"
+                    "  if(a==123)puts(\"yes\");\n"
+                    "  else puts(\"no\");\n"
+                    "  return 0;\n"
+                    "}";
+        string input="/home/gcw/test/test_clion/1.in";
+        string output="/home/gcw/test/test_clion/1.out";
+        auto it=JudgeOperator::stand_judge(code,input,output);
+        cout<<it.information<<endl;
+        auto *r=&it.res;
+        cout<<r->cpu_time<<endl;
+        cout<<r->real_time<<endl;
+        cout<<r->memory<<endl;
+        cout<<r->signal<<endl;
+        cout<<r->exit_code<<endl;
+        cout<<r->result<<endl;
+        cout<<r->error<<endl;
+    }
+
 
     return 0;
+     */
     Server srv;
     TokenOperator tokenOperator;
 
@@ -402,29 +407,7 @@ signed main(){
         header_init
         if(req.has_param("download")){
             if(req.get_param_value("download")=="1"){
-                /*
-                string url=string(file.user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title"));
-                vector<string>g;
-                g.push_back(url+"/date/"+req.get_param_value("id")+".in");
-                g.push_back(url+"/date/"+req.get_param_value("id")+".out");
-                g.push_back(url+"/date/out_"+req.get_param_value("id")+".txt");
-                g.push_back(url+"/date/res_"+req.get_param_value("id")+".txt");
-                string resUrl=file.zip(g,url+"/date",0);
-                res.set_header("Content-Disposition","blob");
-                ifstream ifs(resUrl,ios::binary|ios::in);
-                json js;
-                js["code"]="0";
-                string tmp((istreambuf_iterator<char>(ifs)),istreambuf_iterator<char>());
-                char * enc=( char *)oceanstar::acl_base64_encode(tmp.c_str(),tmp.size());
-                js["data"]=enc;
-                res.set_content(js.dump(), "application/x-zip-compressed;");
-                file.delete_file(resUrl);
-                if(enc){
-                    free(enc);
-                    enc= nullptr;
-                }else{
-                }
-                 */
+
             }
             else if(req.get_param_value("download")=="2"){
                 string url=string(file.user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title"));
@@ -527,37 +510,34 @@ signed main(){
         if(req.has_param("test")){
             if(req.get_param_value("test")=="1"){
                 string url=string(file.user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title"));
-                file.write_txt(url+"/test.cpp",req.get_param_value("txt"));
-                string tmp="g++ -Wall -std=c++17 "+url+"/test.cpp -o "+url+"/test";
-                system(tmp.c_str());
-                file.write_txt(url+"/tmp.out","");
-                string order=url+"/test < "+url+"/date/"+req.get_param_value("data_name")+".in > "+url+"/tmp.out";
-                system(order.c_str());
-                string usr_out,stand_out;
-                file.read_txt(url+"/date/"+req.get_param_value("data_name")+".out",stand_out);
-                file.read_txt(url+"/tmp.out",usr_out);
-                usr_out=file.clear_oher(usr_out);
-                stand_out=file.clear_oher(stand_out);
+                auto judge_res=JudgeOperator::stand_judge(req.get_param_value("txt"),url+"/date/"+req.get_param_value("data_name")+".in",url+"/date/"+req.get_param_value("data_name")+".out");
+                std::shared_ptr<result> r=std::make_shared<result>(judge_res.res);
+                cout<<r->cpu_time<<endl;
+                cout<<r->real_time<<endl;
+                cout<<r->memory<<endl;
+                cout<<r->signal<<endl;
+                cout<<r->exit_code<<endl;
+                cout<<r->result<<endl;
+                cout<<r->error<<endl;
                 json js;
-                if(usr_out==stand_out)js["return"]="AC";
-                else js["return"]="WA";
+                js["return"]=judge_res.information;
                 js["code"]="0";
                 res.set_content(js.dump(), "text/json");
             }
             else if(req.get_param_value("test")=="2"){
-                string url=string(file.user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title"));
+                string url=string(FileOperator::user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title"));
                 string id=req.get_param_value("id");
-                file.write_txt(url+"/test.cpp",req.get_param_value("txt"));
+                FileOperator::write_txt(url+"/test.cpp",req.get_param_value("txt"));
                 string order="g++ -Wall -std=c++17 "+url+"/test.cpp -o "+url+"/test";
                 system(order.c_str());
-                file.write_txt(url+"/tmp.out","");
+                FileOperator::write_txt(url+"/tmp.out","");
                 order=url+"/test < "+url+"/date/"+id+".in > "+url+"/date/out_"+id+".txt";
                 system(order.c_str());
                 order=url+"/spj_code "+url+"/date/"+id+".in "+url+"/date/"+id+".out "+
                         url+"/date/out_"+id+".txt "+url+"/data/res_"+id+".txt";
                 system(order.c_str());
                 string re;
-                file.read_txt(url+"/data/res_"+id+".txt",re);
+                FileOperator::read_txt(url+"/data/res_"+id+".txt",re);
                 json js;
                 js["return"]=re;
                 js["code"]="0";
