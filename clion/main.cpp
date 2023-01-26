@@ -136,7 +136,7 @@ signed main(){
             if(query_id=="1"){
                 vector<string>g;
                 string url=string(req.get_param_value("user_id"));
-                file.get_dir(file.user_id_to_url(url)+"/problem_list",g);
+                FileOperator::get_dir(FileOperator::user_id_to_url(url)+"/problem_list",g);
                 string Title;
                 for(int i=0;i<g.size();i++){
                     Title+=g[i];
@@ -150,16 +150,16 @@ signed main(){
                 res.set_content(js.dump(), "text/json");
             }
             else if(query_id=="2"){
-                string url=file.user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title")+"/statement.md";
+                string url=FileOperator::user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title")+"/statement.md";
                 string tmp;
-                file.read_txt(url,tmp);
+                FileOperator::read_txt(url,tmp);
                 json js;
                 js["txt"]=tmp;
                 js["code"]="0";
                 res.set_content(js.dump(), "text/json");
             }
             else if(query_id=="3"){
-                string url=file.user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title")+"/type.txt";
+                string url=FileOperator::user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title")+"/type.txt";
                 ifstream ifs(url,ios::in);
                 string type,judge,tmp,limit;
                 int sum;
@@ -193,13 +193,13 @@ signed main(){
                 res.set_content(js.dump(), "text/json");
             }
             else if(query_id=="4"||query_id=="5"){
-                string url=file.user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title")+"/spj_code.txt";
+                string url=FileOperator::user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title")+"/spj_code.txt";
                 ifstream ifs(url,ios::in);
                 string s;char ch;
                 while(ifs.get(ch))s+=ch;
                 json js;
                 if(req.get_param_value("query")=="4"){
-                    if(s.size()!=0){
+                    if(!s.empty()){
                         js["have"]="1";
                     }else{
                         js["have"]="0";
@@ -211,7 +211,7 @@ signed main(){
                 res.set_content(js.dump(), "text/json");
             }
             else if(query_id=="6"||query_id=="7"){
-                string url=string(file.user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title"))+"/date/"+req.get_param_value("data_name");
+                string url=string(FileOperator::user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title"))+"/date/"+req.get_param_value("data_name");
                 if(query_id=="6"){
                     url+=".in";
                 }else if(query_id=="7"){
@@ -226,7 +226,7 @@ signed main(){
                 }
                 ifs.close();
                 if(debug)cout<<data<<endl;
-                if(data.size()<0)data=" ";
+                if(data.empty())data=" ";
                 json js;
                 js["data"]=data;
                 js["code"]=0;
@@ -236,7 +236,7 @@ signed main(){
 
             }
             else if(query_id=="9"){
-                string url=string(file.user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title"))+"/date";
+                string url=string(FileOperator::user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title"))+"/date";
                 DIR* d = opendir(url.c_str());
                 if(d==nullptr){
                     res.set_content(ERROR_CODE, "text/json");return;
@@ -250,19 +250,19 @@ signed main(){
                         if(entry->d_name[i]=='.')break;
                         tmp+=entry->d_name[i];
                     }
-                    if(tmp.size()>0)
+                    if(!tmp.empty())
                         s.insert(tmp);
                 }
+                entry=nullptr;
                 closedir(d);
                 json js;
                 string data;
-                for(auto i:s){
+                for(const auto& i:s){
                     data+=i+',';
                 }
-                if(data.size())
+                if(!data.empty())
                     data.pop_back();
-                if(debug)cout<<data<<endl;
-                js["data"]=data.size()?data:"";
+                js["data"]=!data.empty()?data:"";
                 js["code"]="0";
                 res.set_content(js.dump(),"text/json");
             }
@@ -280,40 +280,40 @@ signed main(){
         header_init
         if(req.has_param("add")){
             if(req.get_param_value("add")=="1"){
-                string url=string(file.user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title"));
+                string url=string(FileOperator::user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title"));
                 if(FileOperator::exists_dir(url)){
                     res.set_content(ERROR_CODE, "text/json");
                     return;
                 }
-                file.create_dir(url);
-                file.create_dir(url+"/date");
-                file.create_txt(url+"/type.txt");
-                file.create_txt(url+"/statement.md");
-                if(req.get_param_value("judge_type")=="SPJ")file.create_txt(url+"/spj_code.cpp");
+                FileOperator::create_dir(url);
+                FileOperator::create_dir(url+"/date");
+                FileOperator::create_txt(url+"/type.txt");
+                FileOperator::create_txt(url+"/statement.md");
+                if(req.get_param_value("judge_type")=="SPJ")FileOperator::create_txt(url+"/spj_code.cpp");
                 string tmp="Title "+req.get_param_value("Title")+"\n"+req.get_param_value("judge_type")+"\n0";
-                file.write_txt(url+"/type.txt",tmp);
+                FileOperator::write_txt(url+"/type.txt",tmp);
                 res.set_content(PASS_CODE, "text/json");
             }
             else if(req.get_param_value("add")=="2"){
-                string url=string(file.user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title"));
+                string url=string(FileOperator::user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title"));
                 cout<<url<<endl;
-                if(!file.exists_dir(url)){
+                if(!FileOperator::exists_dir(url)){
                     cout<<"没有这个文件"<<endl;
                     res.set_content(ERROR_CODE, "text/json");
                     return ;
                 }
                 string data_name=req.get_param_value("data_name");
-                if(file.exists_txt(url+"/date/"+ data_name+".in")){
+                if(FileOperator::exists_txt(url+"/date/"+ data_name+".in")){
                     cout<<"有重名数据"<<endl;
                     res.set_content(ERROR_CODE, "text/json");
                     return ;
                 }
 
-                file.create_txt(url+"/date/"+ data_name+".in");
-                file.create_txt(url+"/date/"+ data_name+".out");
-                if(file.read_judge_type(url+"/type.txt")=="SPJ"){
-                    file.create_txt(url+"/date/out_"+ data_name+".txt");
-                    file.create_txt(url+"/date/res_"+ data_name+".txt");
+                FileOperator::create_txt(url+"/date/"+ data_name+".in");
+                FileOperator::create_txt(url+"/date/"+ data_name+".out");
+                if(FileOperator::read_judge_type(url+"/type.txt")=="SPJ"){
+                    FileOperator::create_txt(url+"/date/out_"+ data_name+".txt");
+                    FileOperator::create_txt(url+"/date/res_"+ data_name+".txt");
                 }
                 string tmp;
                 if(req.get_param_value("data_type")=="mat"||req.get_param_value("data_type")=="GraphWithValue"){
@@ -326,16 +326,16 @@ signed main(){
                 }else{
                     tmp=req.get_param_value("data_type");
                 }
-                file.add_date(url+"/type.txt",tmp);
+                FileOperator::add_date(url+"/type.txt",tmp);
                 json js;
                 js["code"]="0";
                 res.set_content(js.dump(), "text/json");
             }
             else if(req.get_param_value("add")=="3"){
-                string url=string(file.user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title"));
+                string url=string(FileOperator::user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title"));
                 string tmp=req.get_param_value("code");
-                file.write_txt(url+"/spj_code.cpp",tmp);
-                if(file.compile_code(url)){
+                FileOperator::write_txt(url+"/spj_code.cpp",tmp);
+                if(FileOperator::compile_code(url)){
                     res.set_content(PASS_CODE, "text/json");
                 }else{
                     res.set_content(ERROR_CODE, "text/json");
@@ -355,16 +355,16 @@ signed main(){
         header_init
         if(req.has_param("delete")){
             if(req.get_param_value("delete")=="1"){
-                string url=string(file.user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title"));
-                file.delete_dir(url);
+                string url=string(FileOperator::user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title"));
+                FileOperator::delete_dir(url);
                 res.set_content(PASS_CODE, "text/json");
             }else if(req.get_param_value("delete")=="2"){
                 FileOperator::Type t;
-                string url=file.user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title")+"/date/"+req.get_param_value("data_name");
-                if(file.exists_dir(url+".in"))
-                    file.delete_file(url+".in");
-                if(file.exists_dir(url+".out"))
-                    file.delete_file(url+".out");
+                string url=FileOperator::user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title")+"/date/"+req.get_param_value("data_name");
+                if(FileOperator::exists_dir(url+".in"))
+                    FileOperator::delete_file(url+".in");
+                if(FileOperator::exists_dir(url+".out"))
+                    FileOperator::delete_file(url+".out");
 
                 res.set_content(PASS_CODE, "text/json");
             }else{
@@ -380,18 +380,18 @@ signed main(){
         header_init
         if(req.has_param("modify")) {
             if(req.get_param_value("modify")=="1"){
-                string url=string(file.user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title"));
+                string url=string(FileOperator::user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title"));
                 string tmp=req.get_param_value("txt");
-                file.write_txt(url+"/statement.md",tmp);
+                FileOperator::write_txt(url+"/statement.md",tmp);
                 res.set_content(PASS_CODE, "text/json");
             }else if(req.get_param_value("modify")=="2"){
                 FileOperator::Type t;
-                string url=string(file.user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("old_Title"));
+                string url=string(FileOperator::user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("old_Title"));
                 t.type_read(url+"/type.txt");
                 t.Title=req.get_param_value("new_Title");
                 t.type_write(url+"/type.txt");
-                file.rename_dir(string(file.user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("old_Title")),
-                                string(file.user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("new_Title")));
+                FileOperator::rename_dir(string(FileOperator::user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("old_Title")),
+                                string(FileOperator::user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("new_Title")));
                 res.set_content(PASS_CODE, "text/json");
             }else{
                 res.set_content(ERROR_CODE, "text/json");
@@ -410,10 +410,10 @@ signed main(){
 
             }
             else if(req.get_param_value("download")=="2"){
-                string url=string(file.user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title"));
+                string url=string(FileOperator::user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title"));
                 vector<string>files;
-                file.getFileNames(url+"/date",files);
-                string resUrl=file.zip(files,url,0);
+                FileOperator::getFileNames(url+"/date",files);
+                string resUrl=FileOperator::zip(files,url,false);
                 res.set_header("Content-Disposition","blob");
                 ifstream ifs(resUrl,ios::binary|ios::in);
                 json js;
@@ -422,7 +422,7 @@ signed main(){
                 char * enc=( char *)oceanstar::acl_base64_encode(tmp.c_str(),tmp.size());
                 js["data"]=enc;
                 res.set_content(js.dump(), "application/x-zip-compressed;");
-                file.delete_file(resUrl);
+                FileOperator::delete_file(resUrl);
                 if(enc){
                     free(enc);
                     enc= nullptr;
@@ -445,56 +445,67 @@ signed main(){
         header_init
         if(req.has_param("build")){
             if(req.get_param_value("build")=="1"){
-                string url=string(file.user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title"));
-                vector<pair<string,string>>g=file.read_date_type(url);
+                string url=string(FileOperator::user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title"))+"/date/"+req.get_param_value("data_name")+".in";
+                if(constructOperator::work(req,url)){//error
+                    res.set_content(ERROR_CODE, "text/json");
+                }else{
+                    res.set_content(PASS_CODE, "text/json");
+                }
+
+                /*
+                string url=string(FileOperator::user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title"));
+                vector<pair<string,string>>g=FileOperator::read_date_type(url);
                 for(int i=0;i<g.size();i++){
                     if(to_string(i+1)!=req.get_param_value("id"))continue;
                     vector<int>lim=constructOperator::xs_split_string_int(g[i].second);
                     if(g[i].first=="mat"){
-                        vector<long long>data=constructOperator::get_array_int(lim[0]*lim[1],lim[2],lim[3],lim[4],0);
-                        string res;
-                        res+=to_string(lim[0])+" "+to_string(lim[1])+'\n';
+                        vector<long long>data=constructOperator::get_array_int(lim[0]*lim[1],lim[2],lim[3],lim[4],false);
+                        string s;
+                        s+=to_string(lim[0])+" "+to_string(lim[1])+'\n';
                         for(int j=0;j<data.size();j++){
-                            res+=to_string(data[j])+" ";
-                            if(j%lim[1]==lim[1]-1)res+='\n';
+                            s+=to_string(data[j])+" ";
+                            if(j%lim[1]==lim[1]-1)s+='\n';
                         }
-                        file.write_txt(url+"/date/"+to_string(i+1)+".in",res);
+                        FileOperator::write_txt(url+"/date/"+to_string(i+1)+".in",s);
                     }else if(g[i].first=="GraphWithValue"){
-                        vector<node_val_int>data=constructOperator::get_map_lineval_int_aim_link(lim[0],lim[1],0,lim[2],lim[3],lim[4]);
+                        vector<node_val_int>data=constructOperator::get_map_lineval_int_aim_link(lim[0],lim[1],false,lim[2],lim[3],lim[4]);
 
-                        string res=to_string(lim[0])+" "+to_string(lim[1])+'\n';
-                        for(auto i:data){
-                            res+=to_string(i.u)+" "+to_string(i.v)+" "+to_string(i.w)+'\n';
+                        string s=to_string(lim[0])+" "+to_string(lim[1])+'\n';
+                        for(auto date1:data){
+                            s+=to_string(date1.u)+" "+to_string(date1.v)+" "+to_string(date1.w)+'\n';
                         }
-                        file.write_txt(url+"/date/"+to_string(i+1)+".in",res);
+                        FileOperator::write_txt(url+"/date/"+to_string(i+1)+".in",s);
                     }else if(g[i].first=="GraphWithOutValue"){
-                        vector<node_val_int>data=constructOperator::get_map_lineval_int_aim_link(lim[0],lim[1],0,0,1e9,0);
+                        vector<node_val_int>data=constructOperator::get_map_lineval_int_aim_link(lim[0],lim[1],false,0,1e9,false);
 
-                        string res=to_string(lim[0])+" "+to_string(lim[1])+'\n';
-                        for(auto i:data){
-                            res+=to_string(i.u)+" "+to_string(i.v)+" "+'\n';
+                        string s=to_string(lim[0])+" "+to_string(lim[1])+'\n';
+                        for(auto data1:data){
+                            s+= to_string(data1.u) + " " + to_string(data1.v) + " " + '\n';
                         }
-                        file.write_txt(url+"/date/"+to_string(i+1)+".in",res);
+                        FileOperator::write_txt(url+"/date/"+to_string(i+1)+".in",s);
                     }
                 }
                 res.set_content(PASS_CODE, "text/json");
+                 */
             }
             else if(req.get_param_value("build")=="2"){
-                string url=string(file.user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title"));
-                file.write_txt(url+"/tmp.cpp",req.get_param_value("txt"));
-                string tmp="g++ -Wall -std=c++17 "+url+"/tmp.cpp -o "+url+"/tmp";
-                system(tmp.c_str());
-                tmp=url+"/tmp > "+url+"/date/"+req.get_param_value("data_name")+".in";
-                system(tmp.c_str());
-                res.set_content(PASS_CODE, "text/json");
+                string url=string(FileOperator::user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title"));
+                info it=JudgeOperator::construct_input(req.get_param_value("txt"),url+"/date/"+req.get_param_value("data_name")+".out",url+"/date/"+req.get_param_value("data_name")+".in");
+                json js;
+                js["code"]=1;
+                js["info"]="ok";
+                if(it.res.result==0&&it.res.error==0)js["code"]=0;
+                else js["info"]=it.information;
+                res.set_content(js.dump(), "text/json");
             }else if(req.get_param_value("build")=="3"){
-                string url=string(file.user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title"));
-                file.write_txt(url+"/work.cpp",req.get_param_value("txt"));
-                string tmp="g++ -Wall -std=c++17 "+url+"/work.cpp -o "+url+"/work";
-                system(tmp.c_str());
-                tmp=url+"/work < "+url+"/date/"+req.get_param_value("data_name")+".in" +" > "+url+"/date/"+req.get_param_value("data_name")+".out";
-                system(tmp.c_str());
-                res.set_content(PASS_CODE, "text/json");
+                string url=string(FileOperator::user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title"));
+                info it=JudgeOperator::construct_input(req.get_param_value("txt"),url+"/date/"+req.get_param_value("data_name")+".in",url+"/date/"+req.get_param_value("data_name")+".out");
+                json js;
+                js["code"]=1;
+                js["info"]="ok";
+                if(it.res.result==0&&it.res.error==0)js["code"]=0;
+                else js["info"]=it.information;
+                res.set_content(js.dump(), "text/json");
             }else{
                 res.set_content(ERROR_CODE, "text/json");
             }
@@ -509,7 +520,7 @@ signed main(){
         header_init
         if(req.has_param("test")){
             if(req.get_param_value("test")=="1"){
-                string url=string(file.user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title"));
+                string url=string(FileOperator::user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title"));
                 auto judge_res=JudgeOperator::stand_judge(req.get_param_value("txt"),url+"/date/"+req.get_param_value("data_name")+".in",url+"/date/"+req.get_param_value("data_name")+".out");
                 std::shared_ptr<result> r=std::make_shared<result>(judge_res.res);
                 cout<<r->cpu_time<<endl;

@@ -5,7 +5,15 @@
 #ifndef CLION_CONSTRUCTOPERATION_H
 #define CLION_CONSTRUCTOPERATION_H
 
-#include <bits/stdc++.h>
+//#include <bits/stdc++.h>
+#include <string>
+#include <vector>
+#include <map>
+#include <queue>
+#include <set>
+#include <iostream>
+#include <random>
+#include "httplib.h"
 using std::string;
 using std::vector;
 using std::swap;
@@ -15,6 +23,7 @@ using std::min;
 using std::max;
 using std::queue;
 using std::set;
+using httplib::Request;
 #define int long long
 struct node_val_int {
     int u, v, w;
@@ -23,16 +32,146 @@ struct node_val_double {
     int u, v;
     double w;
 };
+
+struct n_l_r_unique_val{
+    int n,l,r,unique_val;
+    bool init(const httplib::Request& req){
+        if(!req.has_param("n")||!req.has_param("l")||!req.has_param("r")||!req.has_param("unique_val"))return false;
+        this->n=stoll(req.get_param_value("n"));
+
+        if(!req.has_param("l"))this->l=1;
+        else this->l=stoll(req.get_param_value("l"));
+
+        if(!req.has_param("r"))this->r=1e9;
+        else this->r=stoll(req.get_param_value("r"));
+
+        if(!req.has_param("unique_val"))this->unique_val=0;
+        else this->unique_val=stoll(req.get_param_value("unique_val"));
+
+        return true;
+    }
+};
+struct n_l_r_unique_val_k{
+    int n,l,r,unique_val,k;
+    bool init(const httplib::Request& req){
+        if(!req.has_param("n"))
+            return false;
+        this->n=stoll(req.get_param_value("n"));
+
+        if(!req.has_param("l"))this->l=1;
+        else this->l=stoll(req.get_param_value("l"));
+
+        if(!req.has_param("r"))this->r=1e9;
+        else this->r=stoll(req.get_param_value("r"));
+
+        if(!req.has_param("unique_val"))this->unique_val=0;
+        else this->unique_val=stoll(req.get_param_value("unique_val"));
+
+        if(!req.has_param("k"))this->k=2;
+        else this->k=stoll(req.get_param_value("k"));
+
+        return true;
+    }
+};
+struct n_m_ring_l_r_unique_val{
+    int n,m,ring,l,r,unique_val;
+    bool init(const httplib::Request& req){
+        if(!req.has_param("n")||!req.has_param("m")||!req.has_param("ring"))
+            return false;
+
+        this->n=stoll(req.get_param_value("n"));
+        this->m=stoll(req.get_param_value("m"));
+        this->ring=stoll(req.get_param_value("ring"));
+
+        if(!req.has_param("l"))this->l=1;
+        else this->l=stoll(req.get_param_value("l"));
+
+        if(!req.has_param("r"))this->r=1e9;
+        else this->r=stoll(req.get_param_value("r"));
+
+        if(!req.has_param("unique_val"))this->unique_val=0;
+        else this->unique_val=stoll(req.get_param_value("unique_val"));
+
+        return true;
+    }
+};
+struct n_m_l_r_unique_val{
+    int n,m,l,r,unique_val;
+    bool init(const httplib::Request& req){
+        if(!req.has_param("n")||!req.has_param("m"))
+            return false;
+        this->n=stoll(req.get_param_value("n"));
+        this->m=stoll(req.get_param_value("m"));
+
+        if(!req.has_param("l"))this->l=1;
+        else this->l=stoll(req.get_param_value("l"));
+
+        if(!req.has_param("r"))this->r=1e9;
+        else this->r=stoll(req.get_param_value("r"));
+
+        if(!req.has_param("unique_val"))this->unique_val=0;
+        else this->unique_val=stoll(req.get_param_value("unique_val"));
+        return true;
+    }
+};
+struct n_m_l_r_unique_val_half{
+    int n,m,l,r,unique_val,half;
+    bool init(const httplib::Request& req){
+        if(!req.has_param("n")||!req.has_param("m"))
+            return false;
+        this->n=stoll(req.get_param_value("n"));
+        this->m=stoll(req.get_param_value("m"));
+
+        if(!req.has_param("l"))this->l=1;
+        else this->l=stoll(req.get_param_value("l"));
+
+        if(!req.has_param("r"))this->r=1e9;
+        else this->r=stoll(req.get_param_value("r"));
+
+        if(!req.has_param("unique_val"))this->unique_val=0;
+        else this->unique_val=stoll(req.get_param_value("unique_val"));
+
+        if(!req.has_param("unique_val"))this->half=0;
+        else this->half=stoll(req.get_param_value("half"));
+
+
+        return true;
+    }
+};
+struct n_{
+    int n;
+    bool init(const httplib::Request& req){
+        if(!req.has_param("n"))
+            return false;
+        this->n=stoll(req.get_param_value("n"));
+        return true;
+    }
+};
+struct n_m_l_r{
+    int n,m,l,r;
+    bool init(const httplib::Request& req){
+        if(!req.has_param("n")||!req.has_param("m")||!req.has_param("l")||!req.has_param("r"))
+            return false;
+        this->n=stoll(req.get_param_value("n"));
+        this->m=stoll(req.get_param_value("m"));
+        if(!req.has_param("l"))this->l=1;
+        else this->l=stoll(req.get_param_value("l"));
+
+        if(!req.has_param("r"))this->r=1e9;
+        else this->r=stoll(req.get_param_value("r"));
+        return true;
+    }
+};
 class constructOperator{
 public:
     static int xs_string_to_int(string s);
     static vector<int> xs_split_string_int(string& s);
     static int randed_int(int a, int b);
     static double random_double(double l, double r);
-    static vector<int> get_array_int(int n, int l, int r, bool unique, bool shuffle);
-    static vector<double> get_array_double(int n, double l, double r, bool unique, double eps, bool shuffle);
-    static vector<node_val_int> get_tree_lineval_int(int n, int l, int r, bool unique);
-    static vector<node_val_double> get_tree_lineval_double(int n, double l, double r, double eps, bool unique);
+    static vector<int> get_array_int(int n, int l, int r, bool unique_val, bool shuffle);
+    static vector<double> get_array_double(int n, double l, double r, bool unique_val, double eps, bool shuffle);
+    static vector<node_val_int> get_tree_lineval_int(int n, int l, int r, bool unique_val);
+    static vector<node_val_double> get_tree_lineval_double(int n, double l, double r, double eps, bool unique_val);
     static vector<node_val_int> get_k_tree(int n, int l, int r, int unique, int k);
     static vector<node_val_int> get_map_lineval_int_aim_link(int n, int m, bool ring, int l, int r,bool unique_val);
     static vector<node_val_int> get_map_lineval_int_unaim_link(int n, int m, bool ring, int l, int r,bool unique_val);
@@ -40,7 +179,7 @@ public:
     static vector<node_val_int> get_negative_ring(int n, int m, int l, int r, bool unique_val);
     static vector<node_val_int> get_dichotomous_chart(int Lcnt, int Rcnt, int m, int l, int r, bool unique_val);
     static vector<node_val_int>get_cactus(int n, int l, int r, bool unique_val);
-    static vector<node_val_int> get_eulerian(int n, int m, int l, int r, int unique, bool half, bool unique_val);
+    static vector<node_val_int> get_eulerian(int n, int m, int l, int r, int unique_val, bool half);
     static vector<int> get_primes(int n);
     static int qmi(int a, int k, int p);
     static bool check_big_primes(int n);
@@ -48,6 +187,144 @@ public:
     static vector<int> get_eulers(int n);
     static vector<int> hack_unordered_map(int n);
     static vector<node_val_int> hack_spfa(int n, int m, int l, int r);
+    static int work(const Request& req,const string& url){
+        string type=req.get_param_value("type");
+        //sam优化?
+        if(type=="tree_with_value"){
+            n_l_r_unique_val limit{};
+            if(limit.init(req))return 1;
+            ofstream ofs(url,ios::out);
+            ofs<<limit.n<<'\n';
+            auto data= get_tree_lineval_int(limit.n,limit.l,limit.r,limit.unique_val);
+            for(const auto&i:data){
+                ofs<<i.u<<" "<<i.v<<" "<<i.w<<'\n';
+            }
+            ofs.close();
+            return 0;
+        }
+        else if(type=="tree_with_out_value"){
+            n_l_r_unique_val limit{};
+            if(limit.init(req))return 1;
+            ofstream ofs(url,ios::out);
+            ofs<<limit.n<<'\n';
+            auto data= get_tree_lineval_int(limit.n,limit.l,limit.r,limit.unique_val);
+            for(const auto&i:data){
+                ofs<<i.u<<" "<<i.v<<'\n';
+            }
+            ofs.close();
+            return 0;
+        }
+        else if(type=="K-trees"){
+            n_l_r_unique_val_k limit{};
+            if(limit.init(req))return 1;
+            ofstream ofs(url,ios::out);
+            ofs<<limit.n<<'\n';
+            auto data= get_k_tree(limit.n,limit.l,limit.r,limit.unique_val,limit.k);
+            for(const auto&i:data){
+                ofs<<i.u<<" "<<i.v<<'\n';
+            }
+            ofs.close();
+            return 0;
+        }
+        else if(type=="DAG"||type=="DCG"){
+            n_m_ring_l_r_unique_val limit{};
+            if(limit.init(req))return 1;
+            ofstream ofs(url,ios::out);
+            ofs<<limit.n<<" "<<limit.m<<'\n';
+            auto data= get_map_lineval_int_aim_link(limit.n,limit.m,limit.ring,limit.l,limit.r,limit.unique_val);
+            for(const auto&i:data){
+                ofs<<i.u<<" "<<i.v<<" "<<i.w<<'\n';
+            }
+            ofs.close();
+            return 0;
+        }
+        else if(type=="no_DAG"||type=="no_DCG"){//无向无环图
+            n_m_ring_l_r_unique_val limit{};
+            if(limit.init(req))return 1;
+            ofstream ofs(url,ios::out);
+            ofs<<limit.n<<" "<<limit.m<<'\n';
+            auto data= get_map_lineval_int_unaim_link(limit.n,limit.m,limit.ring,limit.l,limit.r,limit.unique_val);
+            for(const auto&i:data){
+                ofs<<i.u<<" "<<i.v<<" "<<i.w<<'\n';
+            }
+            ofs.close();
+            return 0;
+        }
+        else if(type=="NRG"){
+            n_m_l_r_unique_val limit{};
+            if(limit.init(req))return 1;
+            ofstream ofs(url,ios::out);
+            ofs<<limit.n<<" "<<limit.m<<'\n';
+            auto data= get_negative_ring(limit.n,limit.m,limit.l,limit.r,limit.unique_val);
+            for(const auto&i:data){
+                ofs<<i.u<<" "<<i.v<<" "<<i.w<<'\n';
+            }
+            ofs.close();
+            return 0;
+        }
+        else if(type=="bipartite_graph"){
+
+        }
+        else if(type=="cactus_graph"){
+            n_m_l_r_unique_val limit{};
+            if(limit.init(req))return 1;
+            ofstream ofs(url,ios::out);
+            ofs<<limit.n<<" "<<limit.m<<'\n';
+            auto data= get_cactus(limit.n,limit.l,limit.r,limit.unique_val);
+            for(const auto&i:data){
+                ofs<<i.u<<" "<<i.v<<" "<<i.w<<'\n';
+            }
+            ofs.close();
+            return 0;
+        }
+        else if(type=="euler_graph"){
+            n_m_l_r_unique_val_half limit{};
+            if(limit.init(req))return 1;
+            ofstream ofs(url,ios::out);
+            ofs<<limit.n<<" "<<limit.m<<'\n';
+            auto data= get_eulerian(limit.n,limit.m,limit.l,limit.r,limit.unique_val,limit.half);
+            for(const auto&i:data){
+                ofs<<i.u<<" "<<i.v<<" "<<i.w<<'\n';
+            }
+            ofs.close();
+            return 0;
+        }
+        else if(type=="star_graph"){
+
+        }
+        else if(type=="hack_map"){
+            n_ limit{};
+            if(limit.init(req))return 1;
+            ofstream ofs(url,ios::out);
+            ofs<<limit.n<<" "<<'\n';
+            auto data= hack_unordered_map(limit.n);
+            for(const auto&i:data){
+                ofs<<i<<' ';
+            }
+            ofs.close();
+        }
+        else if(type=="hack_spfa"){
+            n_m_l_r limit{};
+            if(limit.init(req))return 1;
+            ofstream ofs(url,ios::out);
+            ofs<<limit.n<<" "<<limit.m<<'\n';
+            auto data= hack_spfa(limit.n,limit.m,limit.l,limit.r);
+            for(const auto&i:data){
+                ofs<<i.u<<" "<<i.v<<" "<<i.w<<'\n';
+            }
+            ofs.close();
+            return 0;
+        }
+        else if(type=="hack_one_hash"){
+
+        }
+        else if(type=="hack_ull_hash"){
+
+        }
+        else if(type=="DSU"){
+
+        }
+    }
 };
 
 int constructOperator::xs_string_to_int(string s) {
@@ -260,10 +537,10 @@ constructOperator::get_map_lineval_int_aim_link(int n, int m, bool ring, int l, 
                     continue;
                 if (ring)
                     swap(i, j);
-                tmp.push_back({i, j});
+                tmp.emplace_back(i, j);
             }
         }
-        random_shuffle(tmp.begin(), tmp.end());
+        shuffle(tmp.begin(), tmp.end(), std::mt19937(std::random_device()()));
         int idx = 0;
         for (int i = n; i <= m; i++) {
             while (st[ {tmp[idx].first, tmp[idx].second}]) {
@@ -441,8 +718,8 @@ vector<node_val_int> constructOperator::get_cactus(int n, int l, int r, bool uni
 }
 
 vector<node_val_int>
-constructOperator::get_eulerian(int n, int m, int l, int r, int unique, bool half, bool unique_val) {
-    vector<int>map_val = get_array_int(m, l, r, unique_val, 0);
+constructOperator::get_eulerian(int n, int m, int l, int r, int unique, bool half) {
+    vector<int>map_val = get_array_int(m, l, r, unique, 0);
     int u = 1;
     vector<node_val_int>map_line;
     for (int i = 0; i < m - 2; i++) {

@@ -122,11 +122,117 @@ struct info{
 #define init_config
 class JudgeOperator{
 public:
-    static void construct_input(){
+    static info construct_input(const string &code,const string &stand_input,const string& stand_output){
+        string pool_url;
+        int id=judge_poolOperator.get_pool(pool_url);//../judge_pool/id
+        struct result *r;
+        r=new result;
+        struct config *c;
+        c=new config;
+        c->max_cpu_time=5000;
+        c->max_real_time=-1;
+        c->max_memory=104857600;
+        c->max_stack=104857600;
+        c->max_process_number=1;
+        c->max_output_size=int(1e7);
+        c->memory_limit_check_only=0;
 
+
+        FileOperator::write_txt(pool_url+"/code.cpp",code);
+        string order="g++ "+pool_url+"/code.cpp -ldl -lseccomp -o "+pool_url+"/code >"+pool_url+"/log.txt -fmax-errors=100";
+        if(system(order.c_str())==-1){//编译失败
+            init_result(r);
+            r->error=COMPLIE_ERROR;
+            r->result=COMPLIE_ERROR;
+            string ce_info;
+            FileOperator::read_txt(pool_url+"/log.txt",ce_info);
+            return {*r,ce_info};
+        }
+        c->exe_path=(pool_url+"/code");
+        c->input_path=stand_input;
+        c->output_path=(stand_output);
+        c->error_path=(pool_url+"/err.txt");
+        c->log_path=(pool_url+"/log.txt");
+        c->seccomp_rule_name="c_cpp";
+        c->uid=0;
+        c->gid=0;
+        run(c,r);
+        //释放池
+
+        string res_info="AC";
+        if(r->result==1||r->result==2){
+            res_info="TLE";
+        }else if(r->result==3){
+            res_info="MLE";
+        }else if(r->result==4){
+            res_info="RE";
+        }else if(r->result==5){
+            res_info="System error";
+        }else if(FileOperator::read_txt_without_end_of_line(pool_url+"/data.out")!=FileOperator::read_txt_without_end_of_line(stand_output)){
+            res_info="WA\n";
+            FileOperator::read_txt_limit(pool_url+"/data.out",res_info,300);
+        }
+        judge_poolOperator.free_pool(id);
+        auto it=*r;
+        delete r;
+        delete c;
+        return {it,res_info};
     }
-    static void construct_output(){
+    static info construct_output(const string &code,const string &stand_input,const string& stand_output){
+        string pool_url;
+        int id=judge_poolOperator.get_pool(pool_url);//../judge_pool/id
+        struct result *r;
+        r=new result;
+        struct config *c;
+        c=new config;
+        c->max_cpu_time=5000;
+        c->max_real_time=-1;
+        c->max_memory=104857600;
+        c->max_stack=104857600;
+        c->max_process_number=1;
+        c->max_output_size=int(1e7);
+        c->memory_limit_check_only=0;
 
+
+        FileOperator::write_txt(pool_url+"/code.cpp",code);
+        string order="g++ "+pool_url+"/code.cpp -ldl -lseccomp -o "+pool_url+"/code >"+pool_url+"/log.txt -fmax-errors=100";
+        if(system(order.c_str())==-1){//编译失败
+            init_result(r);
+            r->error=COMPLIE_ERROR;
+            r->result=COMPLIE_ERROR;
+            string ce_info;
+            FileOperator::read_txt(pool_url+"/log.txt",ce_info);
+            return {*r,ce_info};
+        }
+        c->exe_path=(pool_url+"/code");
+        c->input_path=stand_input;
+        c->output_path=(stand_output);
+        c->error_path=(pool_url+"/err.txt");
+        c->log_path=(pool_url+"/log.txt");
+        c->seccomp_rule_name="c_cpp";
+        c->uid=0;
+        c->gid=0;
+        run(c,r);
+        //释放池
+
+        string res_info="AC";
+        if(r->result==1||r->result==2){
+            res_info="TLE";
+        }else if(r->result==3){
+            res_info="MLE";
+        }else if(r->result==4){
+            res_info="RE";
+        }else if(r->result==5){
+            res_info="System error";
+        }else if(FileOperator::read_txt_without_end_of_line(pool_url+"/data.out")!=FileOperator::read_txt_without_end_of_line(stand_output)){
+            res_info="WA\n";
+            FileOperator::read_txt_limit(pool_url+"/data.out",res_info,300);
+        }
+        judge_poolOperator.free_pool(id);
+        auto it=*r;
+        delete r;
+        delete c;
+        return {it,res_info};
     }
     static info stand_judge(const string &code,const string &stand_input,const string& stand_output){
         //获取池
@@ -285,10 +391,11 @@ void JudgeOperator::run(struct config *_config, struct result *_result) {
     }
     else if (child_pid > 0) {
         // create new thread to monitor process running time
+        /*
         cout<<child_pid<<endl;
         string order="strace -o log.txt -T -tt -e trace=all -p "+ to_string(child_pid);
         system(order.c_str());
-
+        */
 
         pthread_t tid = 0;
         if (_config->max_real_time != UNLIMITED) {
