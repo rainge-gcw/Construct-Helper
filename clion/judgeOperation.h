@@ -5,7 +5,7 @@
 #ifndef CLION_JUDGEOPERATION_H
 #define CLION_JUDGEOPERATION_H
 #include<bits/stdc++.h>
-#include <stdlib.h>
+#include <cstdlib>
 #include<unistd.h>
 #include<sys/wait.h>
 #include<sys/resource.h>

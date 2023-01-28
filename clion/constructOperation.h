@@ -265,6 +265,8 @@ public:
     static vector<int> get_eulers(int n);
     static vector<int> hack_unordered_map(int n);
     static vector<node_val_int> hack_spfa(int n, int m, int l, int r);
+    static string hack_one_hash(int n,int base,int mod);
+    //static vector<node_val_int>link_negative_ring(int n,int m,int l,int r,bool unique_val);
     static int work(const Request& req,const string& url){
         string type=req.get_param_value("type");
         //sam优化?
@@ -512,7 +514,7 @@ constructOperator::get_array_int(int n, int l, int r, bool unique, bool shuffle)
     vector<int>g;
     if (unique) {
         if (r - l + 1 < n)
-            return g;//不可能构造
+            return {};//不可能构造
         if (r - l <= n * 10) {//在这个值领区间里,不适合使用随机性算法进行构造
             for (int i = l; i <= r; i++) {
                 g.push_back(i);
@@ -786,11 +788,13 @@ bool constructOperator::check_negative_ring(vector<node_val_int> map_line, int n
 
 vector<node_val_int>
 constructOperator::get_negative_ring(int n, int m, int l, int r, bool unique_val) {
-    vector<node_val_int>map_line = get_map_lineval_int_aim_link(n, m, 1, l, r, unique_val);
-    while (!check_negative_ring(map_line, n, m)) {
-        map_line = get_map_lineval_int_aim_link(n, m, 1, l, r, unique_val);
+    for(int i=1;i<=10;i++){
+        vector<node_val_int>map_line = get_map_lineval_int_aim_link(n, m, 1, l, r, unique_val);
+        if(check_negative_ring(map_line, n, m))
+            return map_line;
     }
-    return map_line;
+    if(unique_val&&-l<m)return {};
+    return get_map_lineval_int_aim_link(n, m, true, l, 0, unique_val);
 }
 
 vector<node_val_int>
@@ -860,50 +864,6 @@ constructOperator::get_cactus(int n,int l, int r, bool unique_val) {
 
 }
 
-/*
-vector<node_val_int>
-constructOperator::get_cactus(int n, int l, int r, bool unique_val) {
-    vector<vector<int>>g(n+10);
-    vector<int>vis(n + 10);
-    int m = n - 1;
-    vector<int>tp(n + 10), x(n + 10), y(n + 10);
-    for (int i = 2; i <= n; i++) {
-        int a = randed_int(1, i - 1), b = i;
-        x[i - 1] = a, y[i - 1] = b;
-        g[a].push_back(b);
-        g[b].push_back(a);
-    }
-
-    auto dfs = [&](auto dfs, int u, int p) -> void {
-        int jud=0;
-        for (auto v : g[u]) {
-            if (v == p)
-                continue;
-            if (!jud) {
-                tp[v] = tp[u];
-                jud = 1;
-            } else {
-                tp[v] = v;
-            }
-            dfs(dfs, v, u);
-        }
-    };
-    dfs(dfs, 0, -1);
-    int cnt = randed_int(1, 10);
-    for (int i = 1; i <= cnt; i++) {
-        int aa = randed_int(1, n), bb = tp[aa];
-        if (aa != bb && !vis[bb]) {
-            x[++m] = aa, y[m] = bb;
-            vis[bb] = 1;
-        }
-    }
-    vector<int>map_val = get_array_int(m, l, r, unique_val, 0);
-    vector<node_val_int>map_line;
-    for (int i = 1; i <= m; i++) {
-        map_line.push_back({x[i], y[i], map_val[i - 1]});
-    }
-    return map_line;
-}*/
 
 vector<node_val_int>
 constructOperator::get_eulerian(int n, int m, int l, int r, int unique, bool half) {
@@ -1076,6 +1036,47 @@ constructOperator::get_star_graph(int n,int m, int l, int r,int unique_val) {//�
     }
     return res;
 }
+
+
+string constructOperator::hack_one_hash(int n,int base,int mod) {
+    if(base>1e9||mod>1e9)return {};
+    vector<int>h(n+5),p(n+5);
+    for(int t=1;t<=20;t++){
+        string s;
+        for(int i=1;i<=n;i++){
+            s+=to_string(randed_int(0,25)+'a');
+        }
+        for(int i=1;i<=n;i++){
+            p[i]=p[i-1]*base%mod;
+            h[i]=(h[i-1]*base+s[i])%mod;
+        }
+
+    }
+
+    return {};//构造失败
+}
+/*
+vector<node_val_int>
+constructOperator::link_negative_ring(int n, int m, int l,int r,bool unique_val) {
+    if(unique_val&&r-l<m)return {};
+    vector<int>line_val= get_array_int(m,l,r,unique_val,true);
+    if(line_val.empty())return {};
+
+    int cnt_ring_node= randed_int(1,sqrt(n));//至多用cnt_ring_node个点来构造负环
+
+    int cnt_ring= randed_int(1,sqrt(cnt_ring_node));
+
+
+    if(cnt_ring_node+cnt_ring>=m)return{};
+    vector<node_val_int>res= get_map_lineval_int_aim_link(n-cnt_ring_node,m-cnt_ring_node-cnt_ring,1)
+
+    for(int i=1;i<=cnt_ring;i++){
+
+    }
+
+    return {};
+}
+*/
 
 #undef int
 #endif //CLION_CONSTRUCTOPERATION_H

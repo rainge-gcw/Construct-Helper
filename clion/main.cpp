@@ -6,11 +6,9 @@
 #include "httplib.h"
 #include "tokenOperation.h"
 #include "base64.h"
-//#include "mysqlOperation.h"
 #include "userOperation.h"
 #include "constructOperation.h"
 #include "judgeOperation.h"
-//#include "runner.c"
 #include "tool.h"
 using namespace std;
 #define SERVER_PORT 8080  //定义端口号
@@ -26,46 +24,9 @@ using json=nlohmann::json;
 typedef unsigned long long ull;
 
 signed main(){
-    //int a;
-    //cin>>a;
-    //JudgeOperator::test("/home/gcw/test/1/1","/home/gcw/test/1/1.in","/home/gcw/test/1/1.out","/home/gcw/test/1/err.txt","/home/gcw/test/1/log.txt");
-    /*JudgeOperator::test(1000,104857600,"/home/gcw/test/test_clion/1",
-                        "/home/gcw/test/test_clion/1.in","/home/gcw/test/test_clion/1.out",
-                        "/home/gcw/test/test_clion/err.txt","/home/gcw/test/test_clion/log.txt");*/
-    /*
-    fprintf(stderr, "123");
-    for(int i=1;i<=10;i++){
-        string code="#include<stdio.h>\n"
-                    "int main(){\n"
-                    "  int a;\n"
-                    "  scanf(\"%d\",&a);\n"
-                    "  if(a==123)puts(\"yes\");\n"
-                    "  else puts(\"no\");\n"
-                    "  return 0;\n"
-                    "}";
-        string input="/home/gcw/test/test_clion/1.in";
-        string output="/home/gcw/test/test_clion/1.out";
-        auto it=JudgeOperator::stand_judge(code,input,output);
-        cout<<it.information<<endl;
-        auto *r=&it.res;
-        cout<<r->cpu_time<<endl;
-        cout<<r->real_time<<endl;
-        cout<<r->memory<<endl;
-        cout<<r->signal<<endl;
-        cout<<r->exit_code<<endl;
-        cout<<r->result<<endl;
-        cout<<r->error<<endl;
-    }
-
-
-    return 0;
-     */
-
 
     Server srv;
     TokenOperator tokenOperator;
-
-
     srv.Post("/register", [&](const Request& req, Response& res) {
         header_init
         if(req.has_param("register")){

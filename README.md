@@ -109,9 +109,17 @@ if(ring&&l<0)
 
 ## 负环图
 
-必需参数:n (节点数量)，m(边的数量)
+必需参数:n (节点数量)，m(边的数量)，l(边权下界)，r(边权上界)，
 
-可选参数:c
+可选参数:unique(边权是否唯一)
+
+为了保证生成图的随机性，程序会对图进行随机构造并检查负环。如果超过10次没有构造成功，就会将r设置为0再次构造。
+
+注意:
+
+```
+l<0&&abs(l)<=r
+```
 
 
 
@@ -129,11 +137,13 @@ cnt默认值为n/2
 
 ## 仙人掌
 
-必需参数:n (节点数量)，m(边的数量)
+必需参数:n (节点数量)
 
 可选参数:l(边权下界)，r(边权上界)，unique(边权是否唯一)
 
 当l，r，unique都被填入时，会构造带边权的图，否则会构造不带边权的图
+
+你不需要填写m(边的数量)
 
 输入格式与注意同: **有向无环图**
 
@@ -191,21 +201,79 @@ m<=n
 
 本项目目前正在开发，如果你想要学习一些图的构造方法，请阅读clion/constructOperation.h中的代码，这里将会介绍constructOperation中各个函数的意义，以及代码中的细节。
 
+## constructOperation.h
+
+这个头文件包含了所有构造算法的代码以及接口函数work
+
 我们假设传入数据都是合理合法的，在work函数中，将传入数据进行了检测与缺省补充。如果有未考虑周全之处，还望指出。
 
-## #define int long long
+### #define int long long
 
 在整个文件中的int都是long long，但在工程中这样做似乎这不是一个好习惯?
 
-## struct node_val_int
+### struct node_val_int
 
 这是用来记录图或树中边的结构体，权值为整数。u和v代表一条有向边的出发点与结束点，w代表这条边的权值。
 
-## struct n_l_r_unique_val
+### struct n_l_r_unique_val
 
-这是用于便于检查输入数据和补充缺省的结构题，结构题名字即代表了其中包含的权值。
+这是用于便于检查输入数据和补充缺省的结构题，结构体名字即代表了其中包含的权值。
 
 一般来说n代表节点数量，l，r表示数值上下界，unique_val表示数值的上下界
+
+结构体的构造函数将会直接从用户的报文中读取数据，如果缺少必需参数(如n,m)等，会直接返回1,表示传入参数错误。
+
+```
+int init(const httplib::Request& req){
+	if(!req.has_param("n"))
+            return 1;
+}
+```
+
+而对于可以缺省的参数，会补上相关数据。
+
+对于一般图或树，(构造负环时候会在work的函数中额外进行特判)，缺省值补充为:
+
+权值下界:1
+
+权值上界:$10^9$
+
+是否包含重复权值:false
+
+```
+if(!req.has_param("l"))this->l=1;
+else this->l=stoll(req.get_param_value("l"));
+
+if(!req.has_param("r"))this->r=1e9;
+else this->r=stoll(req.get_param_value("r"));
+
+if(!req.has_param("unique_val"))this->unique_val=0;
+else this->unique_val=stoll(req.get_param_value("unique_val"));
+```
+
+### vector\<int\> get_array_int(int n, int l, int r, bool unique, bool shuffle)
+
+功能:获取一个整数数列
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

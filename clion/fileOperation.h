@@ -17,9 +17,19 @@
 #include <dirent.h>
 #include <cstdio>
 using namespace std;
-#define baseUrl "/home/gcw/Construct_helper/DateSpace/"
+//#define baseUrl "/home/gcw/Construct_helper/DateSpace/"
+string baseUrl;
 class FileOperator{
 public:
+    FileOperator(){
+        char tmp[256];
+        getcwd(tmp, 256);
+        string url=tmp;
+        if(!FileOperator::exists_dir(url+"/DateSpace")){
+            FileOperator::create_dir(url+"/DateSpace");
+        }
+        baseUrl=url+"/DateSpace";
+    }
     struct Type{
         string Title;
         string judge_type;
@@ -39,7 +49,7 @@ public:
                     value+=ch;
                 }
                 //cout<<value<<endl;
-                g.push_back({key,value});
+                g.emplace_back(key,value);
                 value.clear();
             }
             ifs.close();
@@ -49,7 +59,7 @@ public:
             ofs<<"Title "<<Title<<'\n';
             ofs<<judge_type<<'\n';
             ofs<<cnt<<'\n';
-            for(auto i:g){
+            for(const auto& i:g){
                 ofs<<i.first<<i.second<<'\n';
             }
             ofs.close();
