@@ -60,6 +60,8 @@ signed main(){
 
     return 0;
      */
+
+
     Server srv;
     TokenOperator tokenOperator;
 
@@ -136,12 +138,19 @@ signed main(){
             if(query_id=="1"){
                 vector<string>g;
                 string url=string(req.get_param_value("user_id"));
-                FileOperator::get_dir(FileOperator::user_id_to_url(url)+"/problem_list",g);
+                if(!FileOperator::get_dir(FileOperator::user_id_to_url(url) + "/problem_list", g)){
+                    res.set_content(ERROR_CODE,"text/json");
+                    return;
+                }
+                for(auto i:g){
+                    cout<<i<<endl;
+                }
                 string Title;
                 for(int i=0;i<g.size();i++){
                     Title+=g[i];
                     if(i!=g.size()-1)Title+=',';
                 }
+                if(Title.empty())Title="no";
                 json js;
                 js["code"]="0";
                 js["Title"]=Title;
@@ -446,47 +455,18 @@ signed main(){
         if(req.has_param("build")){
             if(req.get_param_value("build")=="1"){
                 string url=string(FileOperator::user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title"))+"/date/"+req.get_param_value("data_name")+".in";
+                if(!FileOperator::exists_txt(url)){
+                    res.set_content(PASS_CODE, "text/json");
+                    cout<<"不存在文件"<<endl;
+                    return;
+                }
                 if(constructOperator::work(req,url)){//error
+                    cout<<"构造失败"<<endl;
                     res.set_content(ERROR_CODE, "text/json");
                 }else{
                     res.set_content(PASS_CODE, "text/json");
                 }
 
-                /*
-                string url=string(FileOperator::user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title"));
-                vector<pair<string,string>>g=FileOperator::read_date_type(url);
-                for(int i=0;i<g.size();i++){
-                    if(to_string(i+1)!=req.get_param_value("id"))continue;
-                    vector<int>lim=constructOperator::xs_split_string_int(g[i].second);
-                    if(g[i].first=="mat"){
-                        vector<long long>data=constructOperator::get_array_int(lim[0]*lim[1],lim[2],lim[3],lim[4],false);
-                        string s;
-                        s+=to_string(lim[0])+" "+to_string(lim[1])+'\n';
-                        for(int j=0;j<data.size();j++){
-                            s+=to_string(data[j])+" ";
-                            if(j%lim[1]==lim[1]-1)s+='\n';
-                        }
-                        FileOperator::write_txt(url+"/date/"+to_string(i+1)+".in",s);
-                    }else if(g[i].first=="GraphWithValue"){
-                        vector<node_val_int>data=constructOperator::get_map_lineval_int_aim_link(lim[0],lim[1],false,lim[2],lim[3],lim[4]);
-
-                        string s=to_string(lim[0])+" "+to_string(lim[1])+'\n';
-                        for(auto date1:data){
-                            s+=to_string(date1.u)+" "+to_string(date1.v)+" "+to_string(date1.w)+'\n';
-                        }
-                        FileOperator::write_txt(url+"/date/"+to_string(i+1)+".in",s);
-                    }else if(g[i].first=="GraphWithOutValue"){
-                        vector<node_val_int>data=constructOperator::get_map_lineval_int_aim_link(lim[0],lim[1],false,0,1e9,false);
-
-                        string s=to_string(lim[0])+" "+to_string(lim[1])+'\n';
-                        for(auto data1:data){
-                            s+= to_string(data1.u) + " " + to_string(data1.v) + " " + '\n';
-                        }
-                        FileOperator::write_txt(url+"/date/"+to_string(i+1)+".in",s);
-                    }
-                }
-                res.set_content(PASS_CODE, "text/json");
-                 */
             }
             else if(req.get_param_value("build")=="2"){
                 string url=string(FileOperator::user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title"));

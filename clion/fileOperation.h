@@ -64,17 +64,18 @@ public:
         return baseUrl+tmp+"userDate";
     }
     static bool get_dir(const string& url,vector<string>& g){
-        DIR *p;
+        DIR* p=opendir((url).c_str());;
         cout<<url<<endl;
-        p=opendir((url+"/").c_str());
-        if(p==NULL)return false;
+        if(p==nullptr)return false;
         struct dirent* ptr;
-        while((ptr = readdir(p))!=0) {
+        while((ptr = readdir(p))!=nullptr) {
             if (strcmp(ptr->d_name, ".") != 0 && strcmp(ptr->d_name, "..") != 0) {
-                g.push_back(ptr->d_name);
+                cout<<ptr->d_name<<endl;
+                g.emplace_back(ptr->d_name);
             }
         }
         closedir(p);
+        return true;
     }
     static bool exists_char(const string& url,const char& ch){
         for(char i:url){
