@@ -15,9 +15,9 @@ struct TokenOperator{
     ull base1=133331;
     int register_token(const string &id,ull &token);
 
-    ull calc_hash(const string&s,ull base);
+    static ull calc_hash(const string&s,ull base);
 
-    ull get_key(const string &s);
+    ull get_key(const string &s) const;
 
     int check(const ull &s,const string &id);
 
@@ -42,14 +42,14 @@ ull TokenOperator::calc_hash(const string &s, ull base) {
     return res;
 }
 
-ull TokenOperator::get_key(const string &s) {
+ull TokenOperator::get_key(const string &s) const {
     return calc_hash(s,base1);
 }
 
 int TokenOperator::check(const ull &s, const string &id) {
     ull key= get_key(id);
-    if(!mp.count(key))return 11;
-    else if(mp[key]!=id)return 12;
+    if(!mp.count(key))return 1;
+    else if(mp[key]!=id)return 2;
     return 0;
 }
 

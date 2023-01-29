@@ -7,7 +7,7 @@
 #include <utility>
 
 #include "fileOperation.h"
-#define DateSpace "/home/gcw/Construct_helper/DateSpace"
+#include "logOperation.h"
 class UserOperator{
 public:
     string usr_name;
@@ -16,7 +16,7 @@ public:
     UserOperator(string,string);
     ~UserOperator();
     [[nodiscard]] int check_user_exists() const;
-    int registered();
+    int registered(string& error_info);
     [[nodiscard]] int password_login() const;
     static int token_login();
 };
@@ -25,24 +25,28 @@ UserOperator::~UserOperator() = default;
 //1 存在 0不存在
 int UserOperator::check_user_exists() const{
     if(FileOperator::exists_dir(FileOperator::user_id_to_url(usr_name))){
+        fprintf(stderr, "exists");
         return 1;
     }
     return 0;
 }
 
 //0注册成功 1注册失败:已经有人注册 2创建失败
-int UserOperator::registered() {
+int UserOperator::registered(string& error_info) {
     if(check_user_exists()){
+        fprintf(stderr, "exists");
+        error_info="usr_id_exists";
         return 1;
     }
     string url=FileOperator::user_id_to_url(usr_name);
-    string s=DateSpace;
+    string s=baseUrl;
     for(auto i:usr_name){
         s+='/';s+=i;
         if(!FileOperator::exists_dir(s))
             FileOperator::create_dir(s);
     }
     if(!FileOperator::create_dir(url)){
+        error_info="system_error,create fail";
         return 2;
     }else{
         FileOperator::create_txt(url+"/user_information.txt");
@@ -55,7 +59,7 @@ int UserOperator::registered() {
 //登录成功返回0
 int UserOperator::password_login() const  {
     if(check_user_exists()==0)
-        return 1;
+        return 2;
     string url=FileOperator::user_id_to_url(usr_name)+"/user_information.txt";
     string tmp;
     FileOperator::read_password(url,tmp);

@@ -10,6 +10,7 @@
 #include "constructOperation.h"
 #include "judgeOperation.h"
 #include "tool.h"
+#include "logOperation.h"
 using namespace std;
 #define SERVER_PORT 8080  //定义端口号
 #define ERROR_CODE "{\"code\":\"1\"}"
@@ -19,29 +20,44 @@ using Server=httplib::Server;
 using Request=httplib::Request;
 using Response=httplib::Response;
 using json=nlohmann::json;
-#define header_init res.set_header("Access-Control-Allow-Origin", "*");res.set_header("Access-Control-Allow-Credentials", "true");res.set_header("Access-Control-Expose-Headers", "content-type");res.set_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");res.set_header("Access-Control-Allow-Headers", "Content-Type,Access-Control-Allow-Headers,Authorization,X-Requested-With");
+#define header_init res.set_header("Access-Control-Allow-Origin", "*");\
+res.set_header("Access-Control-Allow-Credentials", "true");\
+res.set_header("Access-Control-Expose-Headers", "content-type");\
+res.set_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");\
+res.set_header("Access-Control-Allow-Headers", "Content-Type,Access-Control-Allow-Headers,Authorization,X-Requested-With"); \
+logOperator::log_http(req);
 #define int long long
 typedef unsigned long long ull;
 
 signed main(){
 
     Server srv;
+    logOperator::init();
     TokenOperator tokenOperator;
+    FileOperator::init();
     srv.Post("/register", [&](const Request& req, Response& res) {
         header_init
         if(req.has_param("register")){
             if(req.get_param_value("register")=="1"){
                 UserOperator usr(req.get_param_value("user_id"),req.get_param_value("user_password"));
-                int st=usr.registered();
+                string massage;
+                int st=usr.registered(massage);
                 if(!st){
                     res.set_content(PASS_CODE, "text/json");
                 }else{
+                    if(st==1){//已经存在
+                        logOperator::log_user_error(req.body+" "+massage);
+                    }else if(st==2){
+                        logOperator::log_system_error(req.body+" "+massage);
+                    }
                     res.set_content(ERROR_CODE, "text/json");
                 }
             }else{
+                logOperator::log_user_error(req.body+" register!=1");
                 res.set_content(ERROR_CODE, "text/json");
             }
         }else{
+            logOperator::log_user_error(req.body+" no register");
             res.set_content(ERROR_CODE, "text/json");
         }
         std::cout << "Received a request of POST [get_info]." << std::endl;
@@ -56,37 +72,41 @@ signed main(){
                 json js;
                 js["code"]=st;
                 if(st==0){
-                    if(debug)cout<<"存在帐号"<<endl;
                     ull token=0;
                     tokenOperator.register_token(req.get_param_value("user_id"),token);
-                    cout<<token<<endl;
                     js["token"]=token;
-                }else if(st==1){
+                }else if(st==1){//密码不对
+                    logOperator::log_user_error(req.body+" password_error");
+                    js["token"]=0;
+                }else if(st==2){//用户不存在
+                    logOperator::log_user_error(req.body+" no_user");
                     js["token"]=0;
                 }
                 res.set_content(js.dump(),"text/json");
             }
             else if(req.get_param_value("login")=="2"){//使用token登录
                 if(req.has_param("token")){
-                    /*
-                    string s_token=req.get_param_value("token");
-                    string user_id=req.get_param_value("user_id");
-                    ull token=tool.str_to_ull(s_token);
-                     后面还要留日志
-                     */
                     int st=tokenOperator.check(tool.str_to_ull(req.get_param_value("token")),req.get_param_value("user_id"));
                     json js;
                     js["code"]=st;
+                    if(st==1){
+                        logOperator::log_user_error(req.body+" no_this_token");
+                    }else if(st==2){
+                        logOperator::log_system_error(req.body+" hash_error");
+                    }
                     res.set_content(js.dump(),"text/json");
                 }else{//没有token
+                    logOperator::log_system_error(req.body+" no_token_and_use_token_log");
                     res.set_content(ERROR_CODE,"text/json");
                     return;
                 }
             }
             else{//login数字不对
+                logOperator::log_system_error(req.body+" use error login number");
                 res.set_content(ERROR_CODE, "text/json");
             }
         }else{//没有login
+            logOperator::log_system_error(req.body+" have no login");
             res.set_content(ERROR_CODE, "text/json");
         }
         std::cout << "Received a request of POST [get_info]." << std::endl;
@@ -100,11 +120,9 @@ signed main(){
                 vector<string>g;
                 string url=string(req.get_param_value("user_id"));
                 if(!FileOperator::get_dir(FileOperator::user_id_to_url(url) + "/problem_list", g)){
+                    logOperator::log_system_error(req.body+" get_dir_error");
                     res.set_content(ERROR_CODE,"text/json");
                     return;
-                }
-                for(auto i:g){
-                    cout<<i<<endl;
                 }
                 string Title;
                 for(int i=0;i<g.size();i++){
@@ -122,13 +140,18 @@ signed main(){
             else if(query_id=="2"){
                 string url=FileOperator::user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title")+"/statement.md";
                 string tmp;
-                FileOperator::read_txt(url,tmp);
+                if(!FileOperator::read_txt(url,tmp)){
+                    logOperator::log_system_error(req.body+" read_statement_error");
+                    res.set_content(ERROR_CODE,"text/json");
+                    return;
+                }
                 json js;
                 js["txt"]=tmp;
                 js["code"]="0";
                 res.set_content(js.dump(), "text/json");
             }
             else if(query_id=="3"){
+                /*
                 string url=FileOperator::user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title")+"/type.txt";
                 ifstream ifs(url,ios::in);
                 string type,judge,tmp,limit;
@@ -161,8 +184,10 @@ signed main(){
                 js["limit"]=limit;
                 js["code"]="0";
                 res.set_content(js.dump(), "text/json");
+                 */
             }
             else if(query_id=="4"||query_id=="5"){
+                /*
                 string url=FileOperator::user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title")+"/spj_code.txt";
                 ifstream ifs(url,ios::in);
                 string s;char ch;
@@ -179,6 +204,7 @@ signed main(){
                 }
                 js["code"]="0";
                 res.set_content(js.dump(), "text/json");
+                 */
             }
             else if(query_id=="6"||query_id=="7"){
                 string url=string(FileOperator::user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title"))+"/date/"+req.get_param_value("data_name");
@@ -188,14 +214,18 @@ signed main(){
                     url+=".out";
                 }
                 ifstream ifs(url,ios::in);
+                if(!ifs){
+                    logOperator::log_system_error(req.body+" open file fail");
+                    res.set_content(ERROR_CODE,"text/json");
+                    return;
+                }
                 string data;
                 char ch;
                 while(ifs.get(ch)){
                     data+=ch;
-                    if(data.size()>=200)break;
+                    if(data.size()>=2000)break;
                 }
                 ifs.close();
-                if(debug)cout<<data<<endl;
                 if(data.empty())data=" ";
                 json js;
                 js["data"]=data;
@@ -209,13 +239,15 @@ signed main(){
                 string url=string(FileOperator::user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title"))+"/date";
                 DIR* d = opendir(url.c_str());
                 if(d==nullptr){
-                    res.set_content(ERROR_CODE, "text/json");return;
+                    logOperator::log_system_error(req.body+" open dir fail");
+                    res.set_content(ERROR_CODE, "text/json");
+                    return;
                 }
                 struct dirent* entry;
                 set<string>s;
                 while ((entry=readdir(d)) != nullptr){
                     string tmp;
-                    int len=strlen(entry->d_name);
+                    auto len=strlen(entry->d_name);
                     for(int i=0;i<len;i++){
                         if(entry->d_name[i]=='.')break;
                         tmp+=entry->d_name[i];
@@ -237,9 +269,11 @@ signed main(){
                 res.set_content(js.dump(),"text/json");
             }
             else{
+                logOperator::log_system_error(req.body+" use error number");
                 res.set_content(ERROR_CODE, "text/json");
             }
         }else{
+            logOperator::log_system_error(req.body+" no query");
             res.set_content(ERROR_CODE, "text/json");
         }
 
@@ -253,55 +287,64 @@ signed main(){
                 string url=string(FileOperator::user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title"));
                 if(FileOperator::exists_dir(url)){
                     res.set_content(ERROR_CODE, "text/json");
+                    logOperator::log_user_error(req.body+" live problem");
                     return;
                 }
-                FileOperator::create_dir(url);
-                FileOperator::create_dir(url+"/date");
-                FileOperator::create_txt(url+"/type.txt");
-                FileOperator::create_txt(url+"/statement.md");
-                if(req.get_param_value("judge_type")=="SPJ")FileOperator::create_txt(url+"/spj_code.cpp");
+
+                if(!FileOperator::create_dir(url)||
+                    !FileOperator::create_dir(url+"/date")||
+                    !FileOperator::create_txt(url+"/type.txt")||
+                    !FileOperator::create_txt(url+"/statement.md"))
+                {
+                    res.set_content(ERROR_CODE, "text/json");
+                    logOperator::log_user_error(req.body+" create fail");
+                    return;
+                }
+
+
+                if(req.get_param_value("judge_type")=="SPJ"){
+                    if(FileOperator::create_txt(url+"/spj_code.cpp")){
+                        res.set_content(ERROR_CODE, "text/json");
+                        logOperator::log_user_error(req.body+" create spj fail");
+                        return;
+                    }
+                }
+
+
                 string tmp="Title "+req.get_param_value("Title")+"\n"+req.get_param_value("judge_type")+"\n0";
-                FileOperator::write_txt(url+"/type.txt",tmp);
+                if(!FileOperator::write_txt(url+"/type.txt",tmp)){
+                    res.set_content(ERROR_CODE, "text/json");
+                    logOperator::log_user_error(req.body+" write fail");
+                    return;
+                }
                 res.set_content(PASS_CODE, "text/json");
             }
             else if(req.get_param_value("add")=="2"){
                 string url=string(FileOperator::user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title"));
-                cout<<url<<endl;
                 if(!FileOperator::exists_dir(url)){
-                    cout<<"没有这个文件"<<endl;
                     res.set_content(ERROR_CODE, "text/json");
+                    logOperator::log_system_error(req.body+" no dir");
                     return ;
                 }
                 string data_name=req.get_param_value("data_name");
                 if(FileOperator::exists_txt(url+"/date/"+ data_name+".in")){
-                    cout<<"有重名数据"<<endl;
+                    logOperator::log_user_error(req.body+" same name");
                     res.set_content(ERROR_CODE, "text/json");
                     return ;
                 }
+                if(!FileOperator::create_txt(url+"/date/"+ data_name+".in")||
+                !FileOperator::create_txt(url+"/date/"+ data_name+".out")){
+                    res.set_content(ERROR_CODE, "text/json");
+                    logOperator::log_system_error(req.body+" create fail");
+                    return ;
+                }
 
-                FileOperator::create_txt(url+"/date/"+ data_name+".in");
-                FileOperator::create_txt(url+"/date/"+ data_name+".out");
-                if(FileOperator::read_judge_type(url+"/type.txt")=="SPJ"){
-                    FileOperator::create_txt(url+"/date/out_"+ data_name+".txt");
-                    FileOperator::create_txt(url+"/date/res_"+ data_name+".txt");
-                }
-                string tmp;
-                if(req.get_param_value("data_type")=="mat"||req.get_param_value("data_type")=="GraphWithValue"){
-                    tmp=req.get_param_value("data_type")+" "+req.get_param_value("n")+" "+
-                            req.get_param_value("m")+" "+req.get_param_value("l")+" "+
-                            req.get_param_value("r")+" "+req.get_param_value("unique");
-                }else if(req.get_param_value("data_type")=="GraphWithOutValue"){
-                    tmp=req.get_param_value("data_type")+" "+req.get_param_value("n")+" "+
-                        req.get_param_value("m");
-                }else{
-                    tmp=req.get_param_value("data_type");
-                }
-                FileOperator::add_date(url+"/type.txt",tmp);
                 json js;
                 js["code"]="0";
                 res.set_content(js.dump(), "text/json");
             }
             else if(req.get_param_value("add")=="3"){
+                /*
                 string url=string(FileOperator::user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title"));
                 string tmp=req.get_param_value("code");
                 FileOperator::write_txt(url+"/spj_code.cpp",tmp);
@@ -310,11 +353,15 @@ signed main(){
                 }else{
                     res.set_content(ERROR_CODE, "text/json");
                 }
+                 */
             }
             else{
+                logOperator::log_system_error(req.body+" no number");
                 res.set_content(ERROR_CODE, "text/json");
             }
+
         }else{
+            logOperator::log_system_error(req.body+" no add");
             res.set_content(ERROR_CODE, "text/json");
         }
 
@@ -326,21 +373,46 @@ signed main(){
         if(req.has_param("delete")){
             if(req.get_param_value("delete")=="1"){
                 string url=string(FileOperator::user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title"));
-                FileOperator::delete_dir(url);
+                if(!FileOperator::delete_dir(url)){
+                    logOperator::log_system_error(req.body+" delete error");
+                    res.set_content(ERROR_CODE, "text/json");
+                    return;
+                }
                 res.set_content(PASS_CODE, "text/json");
             }else if(req.get_param_value("delete")=="2"){
                 FileOperator::Type t;
                 string url=FileOperator::user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title")+"/date/"+req.get_param_value("data_name");
-                if(FileOperator::exists_dir(url+".in"))
-                    FileOperator::delete_file(url+".in");
-                if(FileOperator::exists_dir(url+".out"))
-                    FileOperator::delete_file(url+".out");
-
+                if(FileOperator::exists_dir(url+".in")){
+                    if(!FileOperator::delete_file(url+".in")){
+                        logOperator::log_system_error(req.body+" delete error");
+                        res.set_content(ERROR_CODE, "text/json");
+                        return ;
+                    }
+                }
+                else{
+                    logOperator::log_system_error(req.body+" no exists");
+                    res.set_content(ERROR_CODE, "text/json");
+                    return ;
+                }
+                if(FileOperator::exists_dir(url+".out")) {
+                    if (!FileOperator::delete_file(url + ".out")) {
+                        logOperator::log_system_error(req.body+" delete error");
+                        res.set_content(ERROR_CODE, "text/json");
+                        return ;
+                    }
+                }
+                else{
+                    logOperator::log_system_error(req.body+" no exists");
+                    res.set_content(ERROR_CODE, "text/json");
+                    return ;
+                }
                 res.set_content(PASS_CODE, "text/json");
             }else{
+                logOperator::log_system_error(req.body+" no number");
                 res.set_content(ERROR_CODE, "text/json");
             }
         }else{
+            logOperator::log_system_error(req.body+" no delete");
             res.set_content(ERROR_CODE, "text/json");
         }
         std::cout << "Received a request of POST [get_info]." << std::endl;
@@ -352,9 +424,14 @@ signed main(){
             if(req.get_param_value("modify")=="1"){
                 string url=string(FileOperator::user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title"));
                 string tmp=req.get_param_value("txt");
-                FileOperator::write_txt(url+"/statement.md",tmp);
+                if(!FileOperator::write_txt(url+"/statement.md",tmp)){
+                    logOperator::log_system_error(req.body+" write fail");
+                    res.set_content(ERROR_CODE, "text/json");
+                    return;
+                }
                 res.set_content(PASS_CODE, "text/json");
             }else if(req.get_param_value("modify")=="2"){
+                /*
                 FileOperator::Type t;
                 string url=string(FileOperator::user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("old_Title"));
                 t.type_read(url+"/type.txt");
@@ -363,10 +440,13 @@ signed main(){
                 FileOperator::rename_dir(string(FileOperator::user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("old_Title")),
                                 string(FileOperator::user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("new_Title")));
                 res.set_content(PASS_CODE, "text/json");
+                 */
             }else{
+                logOperator::log_system_error(req.body+" no modify num");
                 res.set_content(ERROR_CODE, "text/json");
             }
         }else{
+            logOperator::log_system_error(req.body+" no modify");
             res.set_content(ERROR_CODE, "text/json");
         }
 
@@ -390,22 +470,33 @@ signed main(){
                 js["code"]="0";
                 string tmp((istreambuf_iterator<char>(ifs)),istreambuf_iterator<char>());
                 char * enc=( char *)oceanstar::acl_base64_encode(tmp.c_str(),tmp.size());
-                js["data"]=enc;
-                res.set_content(js.dump(), "application/x-zip-compressed;");
-                FileOperator::delete_file(resUrl);
-                if(enc){
-                    free(enc);
-                    enc= nullptr;
-                }else{
+                try {
+                    js["data"]=enc;
+                    if(enc){
+                        free(enc);
+                        enc= nullptr;
+                    }
+                    res.set_content(js.dump(), "application/x-zip-compressed;");
+                    if(!FileOperator::delete_file(resUrl)){
+                        logOperator::log_system_error(req.body+" no modify num");
+                        res.set_content(ERROR_CODE, "text/json");
+                        return;
+                    }
+                }catch (...){
+                    if(enc){
+                        free(enc);
+                        enc= nullptr;
+                    }
                 }
             }
             else{
-
+                logOperator::log_system_error(req.body+" no download num");
+                res.set_content(ERROR_CODE, "text/json");
             }
-
         }
         else{
-
+            logOperator::log_system_error(req.body+" no download");
+            res.set_content(ERROR_CODE, "text/json");
         }
 
         std::cout << "Received a request of POST [get_info]." << std::endl;
@@ -418,16 +509,15 @@ signed main(){
                 string url=string(FileOperator::user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title"))+"/date/"+req.get_param_value("data_name")+".in";
                 if(!FileOperator::exists_txt(url)){
                     res.set_content(PASS_CODE, "text/json");
-                    cout<<"不存在文件"<<endl;
+                    logOperator::log_system_error(req.body+" no txt");
                     return;
                 }
                 if(constructOperator::work(req,url)){//error
-                    cout<<"构造失败"<<endl;
+                    logOperator::log_system_error(req.body+" construct fail");
                     res.set_content(ERROR_CODE, "text/json");
                 }else{
                     res.set_content(PASS_CODE, "text/json");
                 }
-
             }
             else if(req.get_param_value("build")=="2"){
                 string url=string(FileOperator::user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title"));
@@ -448,9 +538,11 @@ signed main(){
                 else js["info"]=it.information;
                 res.set_content(js.dump(), "text/json");
             }else{
+                logOperator::log_system_error(req.body+" no build num");
                 res.set_content(ERROR_CODE, "text/json");
             }
         }else{
+            logOperator::log_system_error(req.body+" no build");
             res.set_content(ERROR_CODE, "text/json");
         }
 
@@ -477,6 +569,7 @@ signed main(){
                 res.set_content(js.dump(), "text/json");
             }
             else if(req.get_param_value("test")=="2"){
+                /*
                 string url=string(FileOperator::user_id_to_url(req.get_param_value("user_id"))+"/problem_list/"+req.get_param_value("Title"));
                 string id=req.get_param_value("id");
                 FileOperator::write_txt(url+"/test.cpp",req.get_param_value("txt"));
@@ -494,8 +587,13 @@ signed main(){
                 js["return"]=re;
                 js["code"]="0";
                 res.set_content(js.dump(), "text/json");
+                 */
+            }else{
+                logOperator::log_system_error(req.body+" no test num");
+                res.set_content(ERROR_CODE, "text/json");
             }
         }else{
+            logOperator::log_system_error(req.body+" no test");
             res.set_content(ERROR_CODE, "text/json");
         }
 

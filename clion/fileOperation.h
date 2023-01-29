@@ -21,14 +21,14 @@ using namespace std;
 string baseUrl;
 class FileOperator{
 public:
-    FileOperator(){
+    static void init(){
         char tmp[256];
         getcwd(tmp, 256);
         string url=tmp;
         if(!FileOperator::exists_dir(url+"/DateSpace")){
             FileOperator::create_dir(url+"/DateSpace");
         }
-        baseUrl=url+"/DateSpace";
+        baseUrl=url+"/DateSpace/";
     }
     struct Type{
         string Title;
@@ -74,8 +74,7 @@ public:
         return baseUrl+tmp+"userDate";
     }
     static bool get_dir(const string& url,vector<string>& g){
-        DIR* p=opendir((url).c_str());;
-        cout<<url<<endl;
+        DIR* p=opendir((url).c_str());
         if(p==nullptr)return false;
         struct dirent* ptr;
         while((ptr = readdir(p))!=nullptr) {
@@ -88,7 +87,7 @@ public:
         return true;
     }
     static bool exists_char(const string& url,const char& ch){
-        for(char i:url){
+        for(const char &i:url){
             if(i==ch)return true;
         }
         return false;
@@ -214,20 +213,12 @@ public:
         ofstream ofs(url,ios::out);
         ofs<<add2;
         ofs.close();
-        return ;
+   }
+    static bool delete_file(const string& url){
+        return remove(url.c_str())==0;
     }
-    static void delete_file(const string& url){
-        remove(url.c_str());
-    }
-    static void delete_dir(const string& url){
-        system(("rm -rf "+url).c_str());
-    }
-    static bool compile_code(const string& url){
-        delete_file(url+"/spj_code");
-        string tmp="g++ -Wall -std=c++17 "+url+"/spj_code.cpp -o "+url+"/spj_code";
-        system(tmp.c_str());
-        if(exists_dir(url+"/spj_code"))return true;
-        return false;
+    static bool delete_dir(const string& url){
+        return system(("rm -rf "+url).c_str())==0;
     }
     static string zip(const vector<string>& url,const string& saveUrl,bool dir){
         string tmp="zip ";
@@ -239,21 +230,14 @@ public:
         system(tmp.c_str());
         return saveUrl+"/data.zip";
     }
-    static void delete_zip(const string& str){
-        if(remove(str.c_str())!=0){
-            cout<<"delete_zip_fail!"<<endl;
-        }
-    }
-    static void get_all_filename(const string& url){
-        DIR* d = opendir(url.c_str());
 
-    }
-    static void getFileNames(string path, vector<string>& files){
+
+    static void getFileNames(const string& path, vector<string>& files){
         struct dirent *ptr;
         DIR *dir;
         dir=opendir(path.c_str());
         string tmp;
-        while((ptr=readdir(dir))!=NULL){
+        while((ptr=readdir(dir))!=nullptr){
             if(ptr->d_name[0] == '.')
                 continue;
             tmp=path+"/"+ptr->d_name;
