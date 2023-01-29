@@ -203,11 +203,9 @@ m<=n
 
 ## 部署服务器
 
-下载/Construct/clion/cmake-build-relese/clion
+在下载/Construct/clion/cmake-build-relese/clion
 
-将该文件移动到任意目录(也可以原地启动),以root用户启动该程序，此时程序会自动在当前目录下创建工作文件，同时监听8080端口
-
-如果不使用root用户启动程序的话，其他功能可以正常运行，但不能运行其他用户提交的代码
+将该文件移动到Linux任意目录,以root用户启动该程序(否者无法运行用户提交的代码)，此时程序会自动在当前目录下创建工作文件，同时监听8080端口
 
 
 
@@ -239,11 +237,11 @@ userOpeartion.h 项目开发早期遗留,试图以面向对象的方式来处理
 
 这个头文件包含了所有构造算法的代码以及接口函数work
 
-我们假设传入数据都是合理合法的，在work函数中，将传入数据进行了检测与缺省补充。如果有未考虑周全之处，还望指出。
+我们假设传入数据都是合理合法的。事实上在work函数中，将传入数据进行了检测与缺省补充。如果有未考虑周全之处，还望指出。
 
 ### #define int long long
 
-在整个文件中的int都是long long，但在工程中这样做似乎这不是一个好习惯?
+在整个constructOperation.h文件中的int都将会被替换为long long.
 
 ### struct node_val_int
 
@@ -436,6 +434,14 @@ $std::unordered\_map/std::unordered\_set$是基于哈希的一种数据结构，
 用哈希来生成token,使用unsigned long long 的自然溢出来减低冲突风险,用 map<ull,string>来存储token和user_id的映射
 
 后续还需要去实现一个队列来删除过期的token
+
+
+
+## poolOperation
+
+这个头文件中主要实现了一个用于给judger分配判题空间的文件池，和一个防止多线程冲突的带锁队列模板
+
+带锁队列的pop()是阻塞的，会一直阻塞到分配到判题空间为止。而try_pop是非阻塞的。他们的返回值是一个智能指针。
 
 
 
