@@ -417,7 +417,387 @@ $std::unordered\_map/std::unordered\_set$是基于哈希的一种数据结构，
 
 ## main.cpp
 
-没什么好介绍的，常规增删改查
+这里主要介绍各接口
+
+Response 
+
+#### register
+
+```
+var Request={
+	"query":"1", 申请注册
+	"user_id":
+	"user_password"
+}	
+```
+
+```
+var Response={
+	"code": 运行结果,0为正常,其他的为异常
+}	
+```
+
+#### login
+
+1:
+
+```
+var Request={
+	"login":"1", 常规账号密码登录
+	"user_id":
+	"user_password"
+}	
+```
+
+```
+var Response={
+	"code": 运行结果,0为正常,其他的为异常
+	"token":登录成功后,会返回一个token
+}	
+```
+
+2:
+
+```
+var Request={
+	"login":"2", 使用token登录
+	"token"
+	"user_id"
+}	
+```
+
+```
+var Response={
+	"code": 运行结果,0为成功登录,其他的为异常
+}	
+```
+
+#### query
+
+1:
+
+```
+var Request={
+	"query":"1", 获取该用户的题目数量以及各题目名
+	"user_id"
+}	
+```
+
+```
+var Response={
+	"sum":一个整数，表明用户一共的题目数量
+	"Title":一个字符串，包含sum个逗号分割的字符串，其中第i项表示第i道题的命名，例:计算素数,小写转大写,花朵的数量
+	"code":一个整数,表示程序的运行结果
+}	
+```
+
+2:
+
+
+
+```
+var Request={
+	"query":"2",获取该用户某个题目的题面信息
+	"user_id"
+	"Title":题目名
+}	
+```
+
+```
+var Response={
+	"txt":为一行字符串，表示该题目的题面
+	"code":一个整数,表示程序的运行结果
+}	
+```
+
+3：
+
+```
+var Request={
+	"query":"2",获取该用户某个题目的题面信息
+	"user_id"
+	"Title":题目名
+}	
+```
+
+```
+var Response={
+	"txt":为一行字符串，表示该题目的题面
+	"code":一个整数,表示程序的运行结果
+}	
+```
+
+6:
+
+
+
+```
+var Request={
+	"query":"6",获取该某道题的某组数据的输入
+	"user_id"
+	"Title":题目名
+	"data_name"这个数据的名字
+}	
+```
+
+```
+var Response={
+	"data":返回的数据
+	"code":一个整数,表示程序的运行结果
+}	
+```
+
+7:
+
+
+
+```
+var Request={
+	"query":"7",获取该某道题的某组数据的输出
+	"user_id"
+	"Title":题目名
+	"data_name"这个数据的名字
+}	
+```
+
+```
+var Response={
+	"data":返回的数据
+	"code":一个整数,表示程序的运行结果
+}	
+```
+
+9:
+
+
+
+```
+var Request={
+	"query":"9",获取该某道题的所有数据名
+	"user_id"
+	"Title":题目名
+}	
+```
+
+```
+var Response={
+	"data":返回的数据,以逗号分割
+	"code":一个整数,表示程序的运行结果
+}	
+```
+
+
+
+#### add
+
+1:
+
+
+
+```
+var Request={
+	"add":"1",添加一道题
+	"user_id"
+	"Title":题目名
+	"judge_type"题目的类型
+}	
+```
+
+```
+var Response={
+	"code":一个整数,表示程序的运行结果
+}	
+```
+
+2：
+
+
+
+```
+var Request={
+	"add":"2",添加一道组数据
+	"user_id"
+	"Title":题目名
+	"data_name"数据的名字
+}	
+```
+
+```
+var Response={
+	"code":一个整数,表示程序的运行结果
+}	
+```
+
+#### delete
+
+1:
+
+
+
+```
+var Request={
+	"delete":"1",删除一道题
+	"user_id"
+	"Title":题目名
+}	
+```
+
+```
+var Response={
+	"code":一个整数,表示程序的运行结果
+}	
+```
+
+​	2：
+
+
+
+```
+var Request={
+	"delete":"2",删除一组数据
+	"user_id"
+	"Title":
+	"data_name"
+}	
+```
+
+```
+var Response={
+	"code":一个整数,表示程序的运行结果
+}	
+```
+
+#### 	modify
+
+1:
+
+```
+var Request={
+	"modify":"1",修改题面
+	"user_id"
+	"Title":
+	"txt":用于修改的数据
+}	
+```
+
+```
+var Response={
+	"code":一个整数,表示程序的运行结果
+}	
+```
+
+#### 	download
+
+2:
+
+
+
+```
+var Request={
+	"download":"2",下载一道题的所有数据
+	"user_id"
+	"Title":
+	
+}	
+```
+
+```
+var Response={
+	"code":一个整数,表示程序的运行结果
+	"data":base64压缩后的二进制文件
+}	
+```
+
+#### build
+
+1:
+
+
+
+```
+var Request={
+	"build":"1",自动构造一个输入数据
+	"user_id"
+	"Title":
+	"data_name"
+	"type":构造的数据类型
+	还有其他参数,根据构造数据类型而定,阅如何使用Construct-Helper的一部分
+}	
+```
+
+```
+var Response={
+	"code":一个整数,表示程序的运行结果
+	"type":构造数据的类型
+	还有其他参数,根据构造数据类型而定,阅如何使用Construct-Helper的一部分
+}	
+```
+
+2:
+
+
+
+```
+var Request={
+	"build":"2",手动构造一个输入数据
+	"user_id"
+	"Title":
+	"data_name"
+}	
+```
+
+```
+var Response={
+	"code":一个整数,表示程序的运行结果
+	"info":具体的运行信息
+}	
+```
+
+3:
+
+
+
+```
+var Request={
+	"build":"3",手动构造一个输出数据
+	"user_id"
+	"Title":
+	"data_name"
+	"txt"构造用的代码
+}	
+```
+
+```
+var Response={
+	"code":一个整数,表示程序的运行结果
+	"info":具体的运行信息
+}	
+```
+
+
+
+#### test
+
+1:
+
+```
+var Request={
+	"test":"1",测试一个代码是否能AC
+	"user_id"
+	"Title":
+	"data_name"
+	"txt"构造用的代码
+}	
+```
+
+```
+var Response={
+	"code":一个整数,表示程序的运行结果
+	"return":具体的运行信息
+}	
+```
+
+
 
 ## judgeOperation
 
